@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Send, CheckCircle2 } from "lucide-react";
 import { submitInvitationAction } from "@/lib/actions";
 import { toast } from "sonner";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Turnstile } from "@marsidev/react-turnstile";
 
 export default function InvitationForm() {
