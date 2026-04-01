@@ -2,15 +2,15 @@
 
 import { useState } from "react";
 import { Send, CheckCircle2 } from "lucide-react";
-import { db } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { submitInvitationAction } from "@/lib/actions";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { Turnstile } from "@marsidev/react-turnstile";
 
 export default function InvitationForm() {
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
+    const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
     const [formData, setFormData] = useState({
         name: "",
         email: "",
@@ -49,25 +49,16 @@ export default function InvitationForm() {
 
         setLoading(true);
         try {
-            await addDoc(collection(db, "invitations"), {
-                ...formData,
-                timestamp: serverTimestamp()
-            });
-
-            // Send email via server action
-            const result = await submitInvitationAction(formData, "");
+            const result = await submitInvitationAction(formData, turnstileToken ?? "");
 
             if (result.success) {
                 toast.success("Richiesta inviata con successo!");
                 setSuccess(true);
                 setFormData({ name: "", email: "", church: "", startDate: "", endDate: "", location: "" });
             } else {
-                console.error("Email delivery failed:", result.error);
-                toast.warning("Invito salvato", {
-                    description: `Richiesta registrata, ma l'invio email è fallito: ${result.error}`
+                toast.error("Errore di invio", {
+                    description: result.error ?? "Si è verificato un errore. Controlla la tua connessione e riprova."
                 });
-                setSuccess(true);
-                setFormData({ name: "", email: "", church: "", startDate: "", endDate: "", location: "" });
             }
         } catch (error) {
             console.error("Error submitting invitation:", error);
@@ -225,10 +216,17 @@ export default function InvitationForm() {
                             />
                         </div>
 
+                        <Turnstile
+                            siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
+                            onSuccess={(token) => setTurnstileToken(token)}
+                            onError={() => setTurnstileToken(null)}
+                            onExpire={() => setTurnstileToken(null)}
+                        />
+
                         <motion.button
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            disabled={loading}
+                            disabled={loading || !turnstileToken}
                             className="w-full bg-secondary text-navy font-black py-3 lg:py-4 rounded-xl flex items-center justify-center gap-2 disabled:opacity-50 mt-3 lg:mt-4"
                         >
                             {loading ? "Invio in corso..." : "Invia Invito"}
