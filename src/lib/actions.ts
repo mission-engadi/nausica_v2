@@ -32,10 +32,14 @@ export async function submitInvitationAction(
   }
 
   // 3. Write to Firestore via Admin SDK (bypasses client security rules)
-  await adminDb.collection("invitations").add({
-    ...validatedData,
-    timestamp: FieldValue.serverTimestamp(),
-  });
+  try {
+    await adminDb.collection("invitations").add({
+      ...validatedData,
+      timestamp: FieldValue.serverTimestamp(),
+    });
+  } catch {
+    return { success: false, error: "Errore di sistema, riprova più tardi" };
+  }
 
   // 4. Send notification email (failure is non-fatal — record is already saved)
   const emailResult = await sendInvitationEmail(validatedData);
