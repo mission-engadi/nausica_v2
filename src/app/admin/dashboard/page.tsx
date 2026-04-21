@@ -403,7 +403,7 @@ export default function Dashboard() {
                     </div>
                 </header>
 
-                {activeTab === 'events' ? (
+                {activeTab === 'events' && (
                     <div className="grid lg:grid-cols-3 gap-12">
                         {/* Form */}
                         <div className="lg:col-span-1">
@@ -702,7 +702,9 @@ export default function Dashboard() {
                             </div>
                         </div>
                     </div>
-                ) : (
+                )}
+
+                {activeTab === 'invitations' && (
                     <div className="space-y-6">
                         <h3 className="text-xl font-black text-navy uppercase">Richieste Ricevute ({invitations.length})</h3>
                         <div className="grid gap-6">
