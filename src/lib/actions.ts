@@ -50,3 +50,74 @@ export async function submitInvitationAction(
 
   return { success: true };
 }
+
+export async function createPayPalOrder(
+  amount: string
+): Promise<{ orderId?: string; error?: string }> {
+  try {
+    const configSnap = await adminDb.collection("adminConfig").doc("paypal").get();
+    if (!configSnap.exists) return { error: "PayPal non configurato" };
+    const { clientId, secretKey } = configSnap.data() as { clientId: string; secretKey: string };
+
+    const tokenRes = await fetch("https://api-m.paypal.com/v1/oauth2/token", {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${Buffer.from(`${clientId}:${secretKey}`).toString("base64")}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: "grant_type=client_credentials",
+    });
+    const { access_token } = (await tokenRes.json()) as { access_token: string };
+
+    const orderRes = await fetch("https://api-m.paypal.com/v2/checkout/orders", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        intent: "CAPTURE",
+        purchase_units: [{ amount: { currency_code: "EUR", value: parseFloat(amount).toFixed(2) } }],
+      }),
+    });
+    const order = (await orderRes.json()) as { id: string };
+    return { orderId: order.id };
+  } catch {
+    return { error: "Errore nella creazione dell'ordine PayPal" };
+  }
+}
+
+export async function capturePayPalOrder(
+  orderId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const configSnap = await adminDb.collection("adminConfig").doc("paypal").get();
+    if (!configSnap.exists) return { success: false, error: "PayPal non configurato" };
+    const { clientId, secretKey } = configSnap.data() as { clientId: string; secretKey: string };
+
+    const tokenRes = await fetch("https://api-m.paypal.com/v1/oauth2/token", {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${Buffer.from(`${clientId}:${secretKey}`).toString("base64")}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: "grant_type=client_credentials",
+    });
+    const { access_token } = (await tokenRes.json()) as { access_token: string };
+
+    const captureRes = await fetch(
+      `https://api-m.paypal.com/v2/checkout/orders/${orderId}/capture`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    const result = (await captureRes.json()) as { status: string };
+    return { success: result.status === "COMPLETED" };
+  } catch {
+    return { success: false, error: "Errore nella cattura del pagamento" };
+  }
+}

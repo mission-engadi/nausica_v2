@@ -31,6 +31,7 @@ export const metadata: Metadata = {
 };
 
 import { Toaster } from "sonner";
+import BrandingProvider from "@/components/BrandingProvider";
 
 export default function RootLayout({
   children,
@@ -42,6 +43,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <BrandingProvider />
         {children}
         <Toaster position="top-right" richColors />
       </body>

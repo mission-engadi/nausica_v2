@@ -2,8 +2,16 @@
 
 import { motion } from "framer-motion";
 import { ShieldCheck, ArrowRight } from "lucide-react";
+import { useContentDoc } from "@/lib/useContentDoc";
+
+const DEFAULTS = {
+    paragraph1: "L'Apostolo Nausica Della Valle opera sotto la copertura spirituale di Cristo e dell'autorità apostolica della chiesa JCFAN di Mettmann, Germania.",
+    paragraph2: "Questa copertura garantisce responsabilità, allineamento dottrinale e protezione spirituale nel ministero, assicurando che tutto ciò che viene fatto sia conforme alla volontà di Dio e alla sana dottrina biblica.",
+};
 
 export default function Copertura() {
+    const content = useContentDoc("copertura", DEFAULTS);
+
     return (
         <section className="py-24 bg-slate-50 relative overflow-hidden">
             <div className="max-w-4xl mx-auto px-8 text-center relative z-10">
@@ -23,9 +31,7 @@ export default function Copertura() {
                     </h2>
 
                     <div className="space-y-6 text-lg text-slate-600 leading-relaxed">
-                        <p>
-                            L'Apostolo Nausica Della Valle opera sotto la copertura spirituale di Cristo e dell'autorità apostolica della chiesa <strong className="text-navy">JCFAN</strong> di Mettmann, Germania.
-                        </p>
+                        <p>{content.paragraph1}</p>
 
                         <div className="py-4 border-y border-slate-200">
                             <h3 className="text-xl font-bold text-navy mb-2">JCFAN - Jesus Christus für alle Nationen</h3>
@@ -37,9 +43,7 @@ export default function Copertura() {
                             </div>
                         </div>
 
-                        <p className="text-base max-w-2xl mx-auto">
-                            Questa copertura garantisce responsabilità, allineamento dottrinale e protezione spirituale nel ministero, assicurando che tutto ciò che viene fatto sia conforme alla volontà di Dio e alla sana dottrina biblica.
-                        </p>
+                        <p className="text-base max-w-2xl mx-auto">{content.paragraph2}</p>
                     </div>
 
                     <div className="pt-8">

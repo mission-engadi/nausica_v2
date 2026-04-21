@@ -4,8 +4,18 @@ import Image from "next/image";
 import Link from "next/link";
 import { MoveRight } from "lucide-react";
 import { motion } from "framer-motion";
+import { useContentDoc } from "@/lib/useContentDoc";
+
+const DEFAULTS = {
+    photoUrl: "/images/hero-frame-main.jpg",
+    headline: "MINISTERIO APOSTOLICO EVANGELISTICO DI",
+    subheadline: "NAUSICA DELLA VALLE",
+    subtitle: "Messaggi di fede potenti che accendono il fuoco dello Spirito Santo e liberano le vite. La verità che spezza le catene.",
+};
 
 export default function Hero() {
+    const content = useContentDoc("hero", DEFAULTS);
+
     return (
         <section className="relative min-h-screen flex items-center pt-20 pb-16 lg:pt-24 lg:pb-32 overflow-hidden bg-navy">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-2 gap-8 lg:gap-12 items-center w-full relative z-10">
@@ -30,9 +40,8 @@ export default function Hero() {
                             transition={{ delay: 0.3, duration: 0.5 }}
                             className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black tracking-tighter leading-[0.95]"
                         >
-                            <span className="text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl">MINISTERIO<br />
-                            APOSTOLICO EVANGELISTICO DI</span><br />
-                            <span className="text-secondary drop-shadow-sm">NAUSICA DELLA VALLE</span>
+                            <span className="text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl">{content.headline}</span><br />
+                            <span className="text-secondary drop-shadow-sm">{content.subheadline}</span>
                         </motion.h1>
                         <motion.p
                             initial={{ opacity: 0, y: 20 }}
@@ -40,7 +49,7 @@ export default function Hero() {
                             transition={{ delay: 0.4, duration: 0.5 }}
                             className="text-base lg:text-lg text-slate-400 max-w-md leading-relaxed"
                         >
-                            Messaggi di fede potenti che accendono il fuoco dello Spirito Santo e liberano le vite. La verità che spezza le catene.
+                            {content.subtitle}
                         </motion.p>
                     </div>
 
@@ -75,7 +84,7 @@ export default function Hero() {
                 >
                     <div className="absolute inset-0 bg-secondary/10 rounded-[40px] md:rounded-[60px] flex items-center justify-center overflow-hidden border-4 md:border-8 border-white/10 shadow-2xl transition-all duration-500 group-hover:border-secondary/30 ring-1 ring-white/5">
                         <Image
-                            src="/images/hero-frame-main.jpg"
+                            src={content.photoUrl}
                             alt="Nausica della Valle preaching"
                             fill
                             sizes="(max-width: 768px) 100vw, 50vw"

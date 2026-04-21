@@ -2,19 +2,23 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { MapPin, Globe, Users } from "lucide-react";
+import { MapPin, Users } from "lucide-react";
+import { useContentDoc } from "@/lib/useContentDoc";
+
+const DEFAULTS = {
+    gallery: ["/images/chiesa-new-1.jpg", "/images/chiesa-new-2.jpg"],
+    logoUrl: "/images/chiesa-logo.jpg",
+    description: "Una comunità vibrante dedicata a portare il messaggio di Cristo a ogni nazione. Sotto la guida dell'Apostolo Giovanni e della Pastora Lia Collura, la nostra chiesa è un luogo di risveglio, guarigione e trasformazione.",
+};
 
 export default function Chiesa() {
-    const photos = [
-        "/images/chiesa-new-1.jpg",
-        "/images/chiesa-new-2.jpg"
-    ];
+    const content = useContentDoc("chiesa", DEFAULTS);
+    const photos = content.gallery.length >= 2 ? content.gallery : DEFAULTS.gallery;
 
     return (
         <section id="chiesa" className="py-24 bg-slate-50 overflow-hidden">
             <div className="max-w-7xl mx-auto px-8">
                 <div className="grid lg:grid-cols-2 gap-16 items-center">
-                    {/* Content Column */}
                     <motion.div
                         initial={{ opacity: 0, x: -50 }}
                         whileInView={{ opacity: 1, x: 0 }}
@@ -38,7 +42,7 @@ export default function Chiesa() {
                         </div>
 
                         <p className="text-lg text-slate-600 leading-relaxed max-w-xl">
-                            Una comunità vibrante dedicata a portare il messaggio di Cristo a ogni nazione. Sotto la guida dell'Apostolo Giovanni e della Pastora Lia Collura, la nostra chiesa è un luogo di risveglio, guarigione e trasformazione.
+                            {content.description}
                         </p>
 
                         <div className="grid sm:grid-cols-2 gap-6">
@@ -71,7 +75,7 @@ export default function Chiesa() {
                                 className="relative w-56 h-56 bg-white p-6 rounded-[40px] shadow-xl border border-slate-100 flex items-center justify-center overflow-hidden transition-shadow hover:shadow-2xl hover:border-secondary/20 cursor-pointer"
                             >
                                 <Image
-                                    src="/images/chiesa-logo.jpg"
+                                    src={content.logoUrl}
                                     alt="Logo Gesù Cristo per tutte le Nazioni"
                                     width={280}
                                     height={280}
@@ -81,7 +85,6 @@ export default function Chiesa() {
                         </div>
                     </motion.div>
 
-                    {/* Photo Gallery Column */}
                     <div className="relative">
                         <div className="grid grid-cols-2 gap-6">
                             <motion.div
@@ -113,8 +116,6 @@ export default function Chiesa() {
                                 />
                             </motion.div>
                         </div>
-
-                        {/* Decorative background element */}
                         <div className="absolute -z-10 -top-12 -right-12 w-64 h-64 bg-secondary/10 rounded-full blur-3xl" />
                     </div>
                 </div>

@@ -3,6 +3,7 @@
 :root {
   --background: #ffffff;
   --foreground: #0f172a;
+  --navy: #0f172a;
   --secondary: #f59e0b;
   --accent: #1e293b;
   --card: #f8fafc;
@@ -37,10 +38,10 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .bg-navy {
-  background-color: #0f172a;
+  background-color: var(--navy);
 }
 
 .text-navy {
-  color: #0f172a;
+  color: var(--navy);
 }
 

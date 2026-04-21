@@ -7,41 +7,11 @@ import { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, updateDoc 
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Plus, LogOut, Trash2, Calendar, MapPin, Loader2, Image as ImageIcon, Pencil, X, Mail, Send, ChevronRight, Clock, Menu, Phone } from "lucide-react";
+import { Plus, LogOut, Trash2, Calendar, MapPin, Loader2, Image as ImageIcon, Pencil, X, Mail, Send, ChevronRight, Clock, Menu, Phone, LayoutTemplate } from "lucide-react";
+import ContentTab from "./ContentTab";
 import { toast } from "sonner";
 
-// Image compression utility
-const compressImage = (file: File): Promise<Blob> => {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = (event) => {
-            const img = new window.Image();
-            img.src = event.target?.result as string;
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 1200;
-                let width = img.width;
-                let height = img.height;
-
-                if (width > MAX_WIDTH) {
-                    height *= MAX_WIDTH / width;
-                    width = MAX_WIDTH;
-                }
-
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx?.drawImage(img, 0, 0, width, height);
-                canvas.toBlob((blob) => {
-                    if (blob) resolve(blob);
-                    else reject(new Error("Compression failed"));
-                }, 'image/jpeg', 0.7);
-            };
-        };
-        reader.onerror = (error) => reject(error);
-    });
-};
+import { compressImage } from "@/lib/imageUtils";
 
 import Skeleton from "@/components/Skeleton";
 
@@ -50,7 +20,7 @@ export default function Dashboard() {
     const [user, setUser] = useState<any>(null);
     const [events, setEvents] = useState<any[]>([]);
     const [invitations, setInvitations] = useState<any[]>([]);
-    const [activeTab, setActiveTab] = useState<"events" | "invitations">("events");
+    const [activeTab, setActiveTab] = useState<"events" | "invitations" | "content">("events");
     const [loading, setLoading] = useState(true);
     const [creating, setCreating] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -323,6 +293,13 @@ export default function Dashboard() {
                         <Send className="w-5 h-5 text-secondary" />
                         Richieste (Inbox)
                     </button>
+                    <button
+                        onClick={() => setActiveTab("content")}
+                        className={`w-full p-4 rounded-xl flex items-center gap-3 font-bold transition-all ${activeTab === 'content' ? 'bg-white/10 text-white' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
+                    >
+                        <LayoutTemplate className="w-5 h-5 text-secondary" />
+                        Contenuto Sito
+                    </button>
                     <a
                         href="/"
                         className="w-full p-4 rounded-xl flex items-center gap-3 font-bold text-white/40 hover:text-white hover:bg-white/5 transition-all"
@@ -373,6 +350,13 @@ export default function Dashboard() {
                         <Send className="w-5 h-5 text-secondary" />
                         Richieste (Inbox)
                     </button>
+                    <button
+                        onClick={() => { setActiveTab("content"); setIsMobileMenuOpen(false); }}
+                        className={`w-full p-4 rounded-xl flex items-center gap-3 font-bold transition-all ${activeTab === 'content' ? 'bg-white/10 text-white' : 'text-white/40'}`}
+                    >
+                        <LayoutTemplate className="w-5 h-5 text-secondary" />
+                        Contenuto Sito
+                    </button>
                     <a
                         href="/"
                         className="w-full p-4 rounded-xl flex items-center gap-3 font-bold text-white/40"
@@ -397,10 +381,10 @@ export default function Dashboard() {
                     <div className="flex items-center justify-between">
                         <div>
                             <h1 className="text-2xl md:text-4xl font-black text-navy uppercase tracking-tighter">
-                                {activeTab === 'events' ? 'Gestione Eventi' : 'Richieste (Inbox)'}
+                                {activeTab === 'events' ? 'Gestione Eventi' : activeTab === 'invitations' ? 'Richieste (Inbox)' : 'Contenuto Sito'}
                             </h1>
                             <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] md:text-xs mt-1 md:mt-2">
-                                {activeTab === 'events' ? 'Crea e modifica i prossimi appuntamenti' : 'Gestisci le richieste di invito ricevute'}
+                                {activeTab === 'events' ? 'Crea e modifica i prossimi appuntamenti' : activeTab === 'invitations' ? 'Gestisci le richieste di invito ricevute' : 'Modifica testi, foto e colori del sito'}
                             </p>
                         </div>
                         <button 
@@ -802,6 +786,10 @@ export default function Dashboard() {
                             )}
                         </div>
                     </div>
+                )}
+
+                {activeTab === 'content' && user && (
+                    <ContentTab user={user} />
                 )}
             </main>
         </div>

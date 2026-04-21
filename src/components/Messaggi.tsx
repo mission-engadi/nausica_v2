@@ -2,16 +2,21 @@
 
 import { Play } from "lucide-react";
 import { motion } from "framer-motion";
+import { useContentDoc } from "@/lib/useContentDoc";
 
-export default function Messaggi() {
-    const VIDEOS = [
+const DEFAULTS = {
+    videos: [
         { id: "jIyVKkUjoj0", title: "Messaggio di Fede e Potenza" },
         { id: "iihmNKhM0tI", title: "La Gloria di Dio in Azione" },
-        { id: "jjWVJURPoyY", title: "Gesù Cristo è il Signore" }
-    ];
+        { id: "jjWVJURPoyY", title: "Gesù Cristo è il Signore" },
+    ],
+};
+
+export default function Messaggi() {
+    const content = useContentDoc("messaggi", DEFAULTS);
 
     return (
-        <section className="py-24 bg-white overflow-hidden">
+        <section id="messaggi" className="py-24 bg-white overflow-hidden">
             <div className="max-w-7xl mx-auto px-8">
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
@@ -40,7 +45,7 @@ export default function Messaggi() {
                 </motion.div>
 
                 <div className="grid md:grid-cols-3 gap-8">
-                    {VIDEOS.map((video, i) => (
+                    {content.videos.map((video, i) => (
                         <motion.a
                             key={video.id}
                             href={`https://www.youtube.com/watch?v=${video.id}`}
@@ -52,13 +57,11 @@ export default function Messaggi() {
                             transition={{ duration: 0.5, delay: i * 0.1 }}
                             className="group relative aspect-video bg-slate-200 rounded-[32px] overflow-hidden shadow-2xl block"
                         >
-                            {/* Thumbnail */}
                             <img
                                 src={`https://img.youtube.com/vi/${video.id}/hqdefault.jpg`}
                                 alt={video.title}
                                 className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                             />
-
                             <div className="absolute inset-0 bg-navy/20 group-hover:bg-navy/40 transition-colors" />
                             <div className="absolute inset-0 flex items-center justify-center">
                                 <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center group-hover:scale-110 transition-transform cursor-pointer">
