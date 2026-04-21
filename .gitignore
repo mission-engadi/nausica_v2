@@ -32,6 +32,8 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# Allow .env.production — contains only public NEXT_PUBLIC_* keys, needed for Firebase build
+!.env.production
 
 # vercel
 .vercel
