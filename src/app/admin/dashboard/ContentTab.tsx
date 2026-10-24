@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { db, storage } from "@/lib/firebase";
+import { auth, db, storage } from "@/lib/firebase";
+import { getPayPalConfigStatus, savePayPalConfig } from "@/lib/admin-actions";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { compressImage } from "@/lib/imageUtils";
@@ -295,19 +296,18 @@ function LibroEditor() {
 function DonationEditor() {
     const [form, setForm] = useState({ iban: "", bic: "", bankName: "", bankAddress: "", correspondentBic: "", paypalClientId: "" });
     const [paypalSecret, setPaypalSecret] = useState("");
+    const [hasPaypalSecret, setHasPaypalSecret] = useState(false);
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
-        Promise.all([
-            getDoc(doc(db, "siteContent", "donation")),
-            getDoc(doc(db, "adminConfig", "paypal")),
-        ]).then(([donationSnap, paypalSnap]) => {
-            if (donationSnap.exists()) setForm((prev) => ({ ...prev, ...donationSnap.data() }));
-            if (paypalSnap.exists()) {
-                const data = paypalSnap.data() as { secretKey?: string };
-                if (data.secretKey) setPaypalSecret("••••••••");
-            }
-        }).catch(() => {});
+        getDoc(doc(db, "siteContent", "donation"))
+            .then((snap) => { if (snap.exists()) setForm((prev) => ({ ...prev, ...snap.data() })); })
+            .catch(() => {});
+        // The secret itself never reaches the browser — only whether one is stored.
+        auth.currentUser?.getIdToken()
+            .then((idToken) => getPayPalConfigStatus(idToken))
+            .then((status) => setHasPaypalSecret(status.hasSecret))
+            .catch(() => {});
     }, []);
 
     const save = async () => {
@@ -322,11 +322,13 @@ function DonationEditor() {
                 paypalClientId: form.paypalClientId,
             }, { merge: true });
 
-            if (paypalSecret && paypalSecret !== "••••••••") {
-                await setDoc(doc(db, "adminConfig", "paypal"), {
-                    clientId: form.paypalClientId,
-                    secretKey: paypalSecret,
-                }, { merge: true });
+            const idToken = await auth.currentUser?.getIdToken();
+            if (!idToken) throw new Error("Not signed in");
+            const result = await savePayPalConfig(idToken, form.paypalClientId, paypalSecret || undefined);
+            if (!result.success) throw new Error(result.error);
+            if (paypalSecret) {
+                setHasPaypalSecret(true);
+                setPaypalSecret("");
             }
             toast.success("Donazioni aggiornate!");
         } catch { toast.error("Errore nel salvataggio"); }
@@ -355,7 +357,7 @@ function DonationEditor() {
                         className={fieldCls}
                         value={paypalSecret}
                         onChange={(e) => setPaypalSecret(e.target.value)}
-                        placeholder="Inserisci per aggiornare"
+                        placeholder={hasPaypalSecret ? "•••••••• (salvata) — inserisci per sostituire" : "Inserisci la Secret Key"}
                         autoComplete="new-password"
                     />
                     <p className="text-[10px] text-slate-400 mt-1">Lascia vuoto per mantenere il valore attuale.</p>

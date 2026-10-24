@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Nausica della Valle | Ministero Apostolico",
     description: "Sito ufficiale del Ministero Apostolico di Nausica della Valle.",
-    url: "https://nausicadellavalle.it",
+    url: "https://nausicadellavalle.org",
     siteName: "Nausica della Valle",
     locale: "it_IT",
     type: "website",

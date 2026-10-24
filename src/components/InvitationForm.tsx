@@ -1,16 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Send, CheckCircle2 } from "lucide-react";
 import { submitInvitationAction } from "@/lib/actions";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { Turnstile } from "@marsidev/react-turnstile";
+import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
+import { todayInRome } from "@/lib/dates";
 
 export default function InvitationForm() {
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
     const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+    const turnstileRef = useRef<TurnstileInstance>(null);
     const [formData, setFormData] = useState({
         name: "",
         email: "",
@@ -21,7 +23,7 @@ export default function InvitationForm() {
     });
 
     // Helper: Get today's date in YYYY-MM-DD format
-    const today = new Date().toISOString().split('T')[0];
+    const today = todayInRome();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -66,6 +68,9 @@ export default function InvitationForm() {
                 description: "Si è verificato un errore. Controlla la tua connessione e riprova."
             });
         }
+        // Turnstile tokens are single-use: get a fresh one before any retry.
+        setTurnstileToken(null);
+        turnstileRef.current?.reset();
         setLoading(false);
     };
 
@@ -217,6 +222,8 @@ export default function InvitationForm() {
                         </div>
 
                         <Turnstile
+                            ref={turnstileRef}
+                            options={{ action: "invitation" }}
                             siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
                             onSuccess={(token) => setTurnstileToken(token)}
                             onError={() => setTurnstileToken(null)}

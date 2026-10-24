@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { collection, query, orderBy, getDocs, where, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { todayInRome, isEventOver } from "@/lib/dates";
 import { Calendar, Clock, MapPin, ChevronRight, X, ZoomIn, Phone, Mail } from "lucide-react";
 import Skeleton from "@/components/Skeleton";
 import { motion, AnimatePresence } from "framer-motion";
@@ -35,17 +36,24 @@ export default function Events() {
     useEffect(() => {
         const fetchEvents = async () => {
             try {
-                // Get today's date in YYYY-MM-DD format for comparison
-                const today = new Date().toISOString().split('T')[0];
+                const today = todayInRome();
+
+                // Multi-day events must stay visible until their endDate, so look back
+                // far enough to catch ones that started earlier, then filter here.
+                const lookback = new Date(`${today}T00:00:00Z`);
+                lookback.setUTCDate(lookback.getUTCDate() - 60);
 
                 const q = query(
                     collection(db, "events"),
-                    where("date", ">=", today),
+                    where("date", ">=", lookback.toISOString().slice(0, 10)),
                     orderBy("date", "asc"),
-                    limit(9)
+                    limit(50)
                 );
                 const snapshot = await getDocs(q);
-                setEvents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                const upcoming = snapshot.docs
+                    .map(doc => ({ id: doc.id, ...doc.data() } as { id: string; date: string; endDate?: string }))
+                    .filter(event => !isEventOver(event, today));
+                setEvents(upcoming.slice(0, 9));
             } catch (err: any) {
                 console.error("Error fetching events:", err);
                 setError(err.message || "Errore nel caricamento eventi");

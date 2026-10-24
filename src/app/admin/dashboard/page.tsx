@@ -12,6 +12,7 @@ import ContentTab from "./ContentTab";
 import { toast } from "sonner";
 
 import { compressImage } from "@/lib/imageUtils";
+import { todayInRome, isEventOver } from "@/lib/dates";
 
 import Skeleton from "@/components/Skeleton";
 
@@ -49,7 +50,6 @@ export default function Dashboard() {
             if (!u) {
                 router.push("/admin/login");
             } else {
-                console.log("Logged in user UID:", u.uid);
                 setUser(u);
                 fetchEvents();
                 fetchInvitations();
@@ -65,9 +65,9 @@ export default function Dashboard() {
             const snapshot = await getDocs(q);
             const allEvents = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as any));
 
-            // Auto-cleanup: Delete past events
-            const today = new Date().toISOString().split('T')[0];
-            const expiredEvents = allEvents.filter(e => e.date < today);
+            // Auto-cleanup: delete events whose last day has passed (Italian time)
+            const today = todayInRome();
+            const expiredEvents = allEvents.filter(e => isEventOver(e, today));
 
             if (expiredEvents.length > 0) {
                 console.log(`Cleaning up ${expiredEvents.length} past events...`);

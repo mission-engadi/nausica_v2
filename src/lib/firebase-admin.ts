@@ -1,4 +1,5 @@
 import { initializeApp, getApps, cert, type App } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 
 function getAdminApp(): App {
@@ -13,3 +14,15 @@ function getAdminApp(): App {
 }
 
 export const adminDb = getFirestore(getAdminApp());
+export const adminAuth = getAuth(getAdminApp());
+
+// Verifies a Firebase ID token and confirms the user is listed in /admins.
+export async function isAdminToken(idToken: string): Promise<boolean> {
+  try {
+    const { uid } = await adminAuth.verifyIdToken(idToken);
+    const adminSnap = await adminDb.collection("admins").doc(uid).get();
+    return adminSnap.exists;
+  } catch {
+    return false;
+  }
+}
