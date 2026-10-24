@@ -1,65 +1,9 @@
-"use server";
-
-import { headers } from "next/headers";
-import { sendInvitationEmail } from "./email";
-import { InvitationSchema, type InvitationInput } from "./invitation-schema";
-import { verifyTurnstileToken } from "./turnstile";
-import { claimTurnstileToken } from "./token-claim";
-import { adminDb } from "./firebase-admin";
-import { FieldValue } from "firebase-admin/firestore";
-import { ZodError } from "zod";
+import { adminDb, FieldValue } from "./firebase-admin";
 
 const PAYPAL_API = "https://api-m.paypal.com";
 const ORDER_ID_REGEX = /^[A-Z0-9]{10,30}$/;
 const MIN_DONATION = 1;
 const MAX_DONATION = 10_000;
-
-export async function submitInvitationAction(
-  formData: InvitationInput,
-  turnstileToken: string
-): Promise<{ success: boolean; error?: string; emailFailed?: boolean }> {
-  // 1. Verify Turnstile token (blocks bots before any DB or email work)
-  const remoteIp = (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim();
-  const isHuman =
-    (await verifyTurnstileToken(turnstileToken, "invitation", remoteIp)) &&
-    (await claimTurnstileToken(adminDb, turnstileToken));
-  if (!isHuman) {
-    return { success: false, error: "Verifica anti-bot fallita. Riprova." };
-  }
-
-  // 2. Validate fields
-  let validatedData: InvitationInput;
-  try {
-    validatedData = InvitationSchema.parse(formData);
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return {
-        success: false,
-        error: "Dati non validi: " + error.issues.map((e: { message: string }) => e.message).join(", "),
-      };
-    }
-    return { success: false, error: "Errore di sistema, riprova più tardi" };
-  }
-
-  // 3. Write to Firestore via Admin SDK (bypasses client security rules)
-  try {
-    await adminDb.collection("invitations").add({
-      ...validatedData,
-      timestamp: FieldValue.serverTimestamp(),
-    });
-  } catch {
-    return { success: false, error: "Errore di sistema, riprova più tardi" };
-  }
-
-  // 4. Send notification email (failure is non-fatal — record is already saved)
-  const emailResult = await sendInvitationEmail(validatedData);
-  if (!emailResult.success) {
-    console.error("Email delivery failed:", emailResult.error);
-    return { success: true, emailFailed: true };
-  }
-
-  return { success: true };
-}
 
 async function getPayPalAccessToken(): Promise<string | null> {
   const configSnap = await adminDb.collection("adminConfig").doc("paypal").get();
@@ -85,7 +29,7 @@ async function getPayPalAccessToken(): Promise<string | null> {
 }
 
 export async function createPayPalOrder(
-  amount: string
+  amount: unknown
 ): Promise<{ orderId?: string; error?: string }> {
   const value = Number(amount);
   if (!Number.isFinite(value) || value < MIN_DONATION || value > MAX_DONATION) {
@@ -121,7 +65,7 @@ export async function createPayPalOrder(
 }
 
 export async function capturePayPalOrder(
-  orderId: string
+  orderId: unknown
 ): Promise<{ success: boolean; error?: string }> {
   if (typeof orderId !== "string" || !ORDER_ID_REGEX.test(orderId)) {
     return { success: false, error: "Ordine non valido" };

@@ -1,5 +1,3 @@
-"use server";
-
 import { adminDb, isAdminToken } from "./firebase-admin";
 
 // The PayPal secret is only ever handled server-side: the admin panel can see
@@ -15,14 +13,15 @@ export async function getPayPalConfigStatus(
 
 export async function savePayPalConfig(
   idToken: string,
-  clientId: string,
-  secretKey?: string
+  clientId: unknown,
+  secretKey?: unknown
 ): Promise<{ success: boolean; error?: string }> {
   if (!(await isAdminToken(idToken))) return { success: false, error: "Non autorizzato" };
+  if (typeof clientId !== "string") return { success: false, error: "Client ID non valido" };
 
   // Client ID is always kept in sync with the public donation config; the secret only when replaced.
   const update: { clientId: string; secretKey?: string } = { clientId: clientId.trim() };
-  if (secretKey && secretKey.trim()) update.secretKey = secretKey.trim();
+  if (typeof secretKey === "string" && secretKey.trim()) update.secretKey = secretKey.trim();
 
   try {
     await adminDb.collection("adminConfig").doc("paypal").set(update, { merge: true });

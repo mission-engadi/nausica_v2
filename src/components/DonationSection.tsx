@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, Copy, Building2, Globe, Landmark, MapPin, Heart } from "lucide-react";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import { useContentDoc } from "@/lib/useContentDoc";
-import { createPayPalOrder, capturePayPalOrder } from "@/lib/actions";
+import { callApi } from "@/lib/api";
 import { toast } from "sonner";
 
 const DEFAULTS = {
@@ -87,7 +87,8 @@ function PayPalDonateSection({ clientId }: { clientId: string }) {
                         <PayPalButtons
                             style={{ layout: "horizontal", color: "gold", shape: "rect", label: "donate", height: 45 }}
                             createOrder={async () => {
-                                const result = await createPayPalOrder(finalAmount);
+                                const result = await callApi<{ orderId?: string; error?: string }>("/api/paypal/order", { body: { amount: finalAmount } })
+                                    .catch(() => ({ orderId: undefined, error: undefined }));
                                 if (result.error || !result.orderId) {
                                     toast.error("Errore PayPal: " + (result.error ?? "riprova"));
                                     throw new Error(result.error ?? "Order creation failed");
@@ -95,7 +96,8 @@ function PayPalDonateSection({ clientId }: { clientId: string }) {
                                 return result.orderId;
                             }}
                             onApprove={async (data) => {
-                                const result = await capturePayPalOrder(data.orderID);
+                                const result = await callApi<{ success: boolean }>("/api/paypal/capture", { body: { orderId: data.orderID } })
+                                    .catch(() => ({ success: false }));
                                 if (result.success) {
                                     setDonationDone(true);
                                 } else {

@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Send, CheckCircle2 } from "lucide-react";
-import { submitInvitationAction } from "@/lib/actions";
+import { callApi } from "@/lib/api";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
@@ -51,7 +51,10 @@ export default function InvitationForm() {
 
         setLoading(true);
         try {
-            const result = await submitInvitationAction(formData, turnstileToken ?? "");
+            const result = await callApi<{ success: boolean; error?: string; emailFailed?: boolean }>(
+                "/api/invitation",
+                { body: { formData, turnstileToken: turnstileToken ?? "" } }
+            );
 
             if (result.success) {
                 toast.success("Richiesta inviata con successo!");

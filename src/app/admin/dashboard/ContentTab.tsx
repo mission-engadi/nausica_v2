@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { auth, db, storage } from "@/lib/firebase";
-import { getPayPalConfigStatus, savePayPalConfig } from "@/lib/admin-actions";
+import { callApi } from "@/lib/api";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { compressImage } from "@/lib/imageUtils";
@@ -305,7 +305,7 @@ function DonationEditor() {
             .catch(() => {});
         // The secret itself never reaches the browser — only whether one is stored.
         auth.currentUser?.getIdToken()
-            .then((idToken) => getPayPalConfigStatus(idToken))
+            .then((idToken) => callApi<{ hasSecret: boolean }>("/api/admin/paypal-config", { idToken }))
             .then((status) => setHasPaypalSecret(status.hasSecret))
             .catch(() => {});
     }, []);
@@ -324,7 +324,10 @@ function DonationEditor() {
 
             const idToken = await auth.currentUser?.getIdToken();
             if (!idToken) throw new Error("Not signed in");
-            const result = await savePayPalConfig(idToken, form.paypalClientId, paypalSecret || undefined);
+            const result = await callApi<{ success: boolean; error?: string }>("/api/admin/paypal-config", {
+                idToken,
+                body: { clientId: form.paypalClientId, secretKey: paypalSecret || undefined },
+            });
             if (!result.success) throw new Error(result.error);
             if (paypalSecret) {
                 setHasPaypalSecret(true);
