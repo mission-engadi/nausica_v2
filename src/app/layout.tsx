@@ -40,6 +40,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="it" suppressHydrationWarning>
+      <head>
+        {/* Restore cached brand colors before first paint to prevent flash of unstyled content */}
+        <script src="/branding-restore.js" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

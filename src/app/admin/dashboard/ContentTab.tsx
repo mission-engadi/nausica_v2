@@ -459,7 +459,8 @@ function BrandingEditor() {
         setSaving(true);
         try {
             await setDoc(doc(db, "siteContent", "branding"), form, { merge: true });
-            toast.success("Colori aggiornati! Ricarica la pagina per vederli.");
+            localStorage.setItem("nausica_branding", JSON.stringify({ p: form.primaryColor, s: form.secondaryColor }));
+            toast.success("Colori aggiornati!");
         } catch { toast.error("Errore nel salvataggio"); }
         setSaving(false);
     };

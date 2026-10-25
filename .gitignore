@@ -45,6 +45,9 @@ next-env.d.ts
 # Firebase local CLI cache
 .firebase/
 
+# Large generated video files (host separately, don't commit to git)
+/public/*.mp4
+
 # Local tool caches and artifacts
 .npm-cache/
 **/.npm-cache/
