@@ -68,4 +68,25 @@ describe("InvitationSchema", () => {
       InvitationSchema.parse({ ...valid, location: "A".repeat(201) })
     ).toThrow();
   });
+
+  it("accepts a single-day event", () => {
+    expect(() => InvitationSchema.parse({ ...valid, endDate: valid.startDate })).not.toThrow();
+  });
+
+  it("rejects an end date before the start date", () => {
+    expect(() => InvitationSchema.parse({ ...valid, endDate: "2026-04-30" })).toThrow();
+  });
+
+  it("accepts a period of exactly one month", () => {
+    expect(() => InvitationSchema.parse({ ...valid, endDate: "2026-06-01" })).not.toThrow();
+  });
+
+  it("rejects a period longer than one month", () => {
+    expect(() => InvitationSchema.parse({ ...valid, endDate: "2026-06-02" })).toThrow();
+  });
+
+  it("rejects impossible calendar dates", () => {
+    expect(() => InvitationSchema.parse({ ...valid, startDate: "2026-02-30", endDate: "2026-03-01" })).toThrow();
+    expect(() => InvitationSchema.parse({ ...valid, endDate: "2026-13-01" })).toThrow();
+  });
 });

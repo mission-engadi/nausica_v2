@@ -8,11 +8,6 @@ import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { compressImage } from "@/lib/imageUtils";
 import { toast } from "sonner";
 import { ChevronDown, Image as ImageIcon, Loader2, Plus, Trash2, Save, Palette } from "lucide-react";
-import type { User } from "firebase/auth";
-
-interface ContentTabProps {
-    user: User;
-}
 
 const SECTION_LABELS: Record<string, string> = {
     hero: "Hero (Copertina)",
@@ -505,7 +500,7 @@ function BrandingEditor() {
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
-export default function ContentTab({ user: _user }: ContentTabProps) {
+export default function ContentTab() {
     return (
         <div className="space-y-4 max-w-3xl">
             <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] md:text-xs mb-6">

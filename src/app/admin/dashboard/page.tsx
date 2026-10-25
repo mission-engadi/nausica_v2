@@ -6,21 +6,25 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 import { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, updateDoc } from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import type { User } from "firebase/auth";
+import { FirebaseError } from "firebase/app";
 import Image from "next/image";
-import { Plus, LogOut, Trash2, Calendar, MapPin, Loader2, Image as ImageIcon, Pencil, X, Mail, Send, ChevronRight, Clock, Menu, Phone, LayoutTemplate } from "lucide-react";
+import { Plus, LogOut, Trash2, Calendar, MapPin, Loader2, X, Mail, Send, ChevronRight, Clock, Menu, Phone, LayoutTemplate } from "lucide-react";
 import ContentTab from "./ContentTab";
 import { toast } from "sonner";
 
 import { compressImage } from "@/lib/imageUtils";
 import { todayInRome, isEventOver } from "@/lib/dates";
+import type { SiteEvent, Invitation } from "@/lib/types";
 
 import Skeleton from "@/components/Skeleton";
 
 export default function Dashboard() {
     // ... (rest of the component state)
-    const [user, setUser] = useState<any>(null);
-    const [events, setEvents] = useState<any[]>([]);
-    const [invitations, setInvitations] = useState<any[]>([]);
+    const [user, setUser] = useState<User | null>(null);
+    const [events, setEvents] = useState<SiteEvent[]>([]);
+    const [invitations, setInvitations] = useState<Invitation[]>([]);
     const [activeTab, setActiveTab] = useState<"events" | "invitations" | "content">("events");
     const [loading, setLoading] = useState(true);
     const [creating, setCreating] = useState(false);
@@ -63,7 +67,7 @@ export default function Dashboard() {
         try {
             const q = query(collection(db, "events"), orderBy("date", "desc"));
             const snapshot = await getDocs(q);
-            const allEvents = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as any));
+            const allEvents = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as SiteEvent));
 
             // Auto-cleanup: delete events whose last day has passed (Italian time)
             const today = todayInRome();
@@ -74,8 +78,8 @@ export default function Dashboard() {
                 for (const expired of expiredEvents) {
                     try {
                         await deleteDoc(doc(db, "events", expired.id));
-                    } catch (err: any) {
-                        if (err.code === 'permission-denied') {
+                    } catch (err) {
+                        if (err instanceof FirebaseError && err.code === 'permission-denied') {
                             console.warn("Permission denied while cleaning up expired event. User might not be an admin.");
                         } else {
                             console.error("Failed to delete expired event:", expired.id, err);
@@ -84,11 +88,11 @@ export default function Dashboard() {
                 }
                 // Refresh list after cleanup attempt
                 const freshSnapshot = await getDocs(q);
-                setEvents(freshSnapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+                setEvents(freshSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as SiteEvent)));
             } else {
                 setEvents(allEvents);
             }
-        } catch (err: any) {
+        } catch (err) {
             console.error("Error fetching events:", err);
             toast.error("Errore nel caricamento degli eventi");
         } finally {
@@ -100,9 +104,9 @@ export default function Dashboard() {
         try {
             const q = query(collection(db, "invitations"), orderBy("timestamp", "desc"));
             const snapshot = await getDocs(q);
-            setInvitations(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as any)));
-        } catch (err: any) {
-            if (err.code === 'permission-denied') {
+            setInvitations(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Invitation)));
+        } catch (err) {
+            if (err instanceof FirebaseError && err.code === 'permission-denied') {
                 console.warn("Permission denied fetching invitations. User might not be an admin.");
                 toast.error("Accesso negato: non hai i permessi per vedere le richieste.");
             } else {
@@ -112,7 +116,7 @@ export default function Dashboard() {
         }
     };
 
-    const handleEdit = (event: any) => {
+    const handleEdit = (event: SiteEvent) => {
         setEditingId(event.id);
         setFormData({
             title: event.title,
@@ -240,7 +244,7 @@ export default function Dashboard() {
                         await deleteDoc(doc(db, "events", id));
                         toast.success("Evento eliminato");
                         fetchEvents();
-                    } catch (err) {
+                    } catch {
                         toast.error("Errore durante l'eliminazione");
                     }
                 },
@@ -257,7 +261,7 @@ export default function Dashboard() {
                         await deleteDoc(doc(db, "invitations", id));
                         toast.success("Richiesta eliminata");
                         fetchInvitations();
-                    } catch (err) {
+                    } catch {
                         toast.error("Errore durante l'eliminazione");
                     }
                 },
@@ -300,13 +304,13 @@ export default function Dashboard() {
                         <LayoutTemplate className="w-5 h-5 text-secondary" />
                         Contenuto Sito
                     </button>
-                    <a
+                    <Link
                         href="/"
                         className="w-full p-4 rounded-xl flex items-center gap-3 font-bold text-white/40 hover:text-white hover:bg-white/5 transition-all"
                     >
                         <Plus className="w-5 h-5 text-secondary rotate-45" />
                         Vedi Sito Live
-                    </a>
+                    </Link>
                 </nav>
 
                 <button
@@ -357,13 +361,13 @@ export default function Dashboard() {
                         <LayoutTemplate className="w-5 h-5 text-secondary" />
                         Contenuto Sito
                     </button>
-                    <a
+                    <Link
                         href="/"
                         className="w-full p-4 rounded-xl flex items-center gap-3 font-bold text-white/40"
                     >
                         <Plus className="w-5 h-5 text-secondary rotate-45" />
                         Vedi Sito Live
-                    </a>
+                    </Link>
                 </nav>
 
                 <button
@@ -645,7 +649,7 @@ export default function Dashboard() {
                                         <div key={event.id} className="bg-white p-6 rounded-[32px] shadow-xl border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-6 group hover:border-navy/20 transition-all">
                                             <div className="flex items-center gap-6">
                                                 <div className="w-24 h-24 rounded-2xl overflow-hidden shrink-0 border-4 border-slate-50 relative">
-                                                    <Image src={event.imageUrl} fill className="object-cover" alt={event.title} />
+                                                    <Image src={event.imageUrl || "https://images.unsplash.com/photo-1438232992991-995b7058bbb3?q=80&w=1000"} fill className="object-cover" alt={event.title} />
                                                 </div>
                                                 <div className="space-y-1">
                                                     <h4 className="font-black text-navy uppercase text-lg leading-tight">{event.title}</h4>
@@ -791,7 +795,7 @@ export default function Dashboard() {
                 )}
 
                 {activeTab === 'content' && user && (
-                    <ContentTab user={user} />
+                    <ContentTab />
                 )}
             </main>
         </div>

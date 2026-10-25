@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { auth } from "@/lib/firebase";
+import { FirebaseError } from "firebase/app";
 import { signInWithEmailAndPassword, setPersistence, browserLocalPersistence, onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -32,10 +33,11 @@ export default function LoginPage() {
             await setPersistence(auth, browserLocalPersistence);
             await signInWithEmailAndPassword(auth, email, password);
             router.push("/admin/dashboard");
-        } catch (err: any) {
-            console.error("Login Error:", err.code, err.message);
+        } catch (err) {
+            const code = err instanceof FirebaseError ? err.code : "unknown";
+            console.error("Login Error:", code);
 
-            switch (err.code) {
+            switch (code) {
                 case "auth/invalid-credential":
                     setError("Email o password non corretti. Riprova.");
                     break;

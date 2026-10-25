@@ -4,15 +4,16 @@ import { useEffect, useState } from "react";
 import { collection, query, orderBy, getDocs, where, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { todayInRome, isEventOver } from "@/lib/dates";
+import type { SiteEvent } from "@/lib/types";
 import { Calendar, Clock, MapPin, ChevronRight, X, ZoomIn, Phone, Mail } from "lucide-react";
 import Skeleton from "@/components/Skeleton";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Events() {
-    const [events, setEvents] = useState<any[]>([]);
+    const [events, setEvents] = useState<SiteEvent[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
+    const [selectedEvent, setSelectedEvent] = useState<SiteEvent | null>(null);
 
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -51,12 +52,12 @@ export default function Events() {
                 );
                 const snapshot = await getDocs(q);
                 const upcoming = snapshot.docs
-                    .map(doc => ({ id: doc.id, ...doc.data() } as { id: string; date: string; endDate?: string }))
+                    .map(doc => ({ id: doc.id, ...doc.data() } as SiteEvent))
                     .filter(event => !isEventOver(event, today));
                 setEvents(upcoming.slice(0, 9));
-            } catch (err: any) {
+            } catch (err) {
                 console.error("Error fetching events:", err);
-                setError(err.message || "Errore nel caricamento eventi");
+                setError("Errore nel caricamento eventi");
             }
             setLoading(false);
         };
