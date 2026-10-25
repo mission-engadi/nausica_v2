@@ -19,6 +19,12 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // firebase-tools build copy left behind by `firebase deploy`:
+    ".firebase/**",
+    // Local admin tutorial material (git-ignored, not part of the site):
+    "admin-tutorial/**",
+    "admin-tutorial-hf/**",
+    "scripts/**",
   ]),
 ]);
 

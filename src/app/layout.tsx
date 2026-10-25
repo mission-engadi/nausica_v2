@@ -41,7 +41,9 @@ export default function RootLayout({
   return (
     <html lang="it" suppressHydrationWarning>
       <head>
-        {/* Restore cached brand colors before first paint to prevent flash of unstyled content */}
+        {/* Restore cached brand colors before first paint to prevent flash of unstyled content.
+            It must block rendering, which is exactly what no-sync-scripts warns against. */}
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script src="/branding-restore.js" />
       </head>
       <body

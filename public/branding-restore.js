@@ -1,1 +1,1 @@
-(function(){try{var b=JSON.parse(localStorage.getItem('nausica_branding')||'{}');if(b.p)document.documentElement.style.setProperty('--navy',b.p);if(b.s)document.documentElement.style.setProperty('--secondary',b.s);}catch(e){}})();
+(function(){try{var b=JSON.parse(localStorage.getItem('nausica_branding')||'{}');if(b.p)document.documentElement.style.setProperty('--navy',b.p);if(b.s)document.documentElement.style.setProperty('--secondary',b.s);}catch{}})();
